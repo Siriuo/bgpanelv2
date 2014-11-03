@@ -16,28 +16,34 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  *
- * @categories	Games/Entertainment, Systems Administration
  * @package		Bright Game Panel V2
- * @author		warhawk3407 <warhawk3407@gmail.com> @NOSPAM
- * @copyleft	2014
- * @license		GNU General Public License version 3.0 (GPLv3)
  * @version		0.1
+ * @category	Systems Administration
+ * @author		warhawk3407 <warhawk3407@gmail.com> @NOSPAM
+ * @copyright	Copyleft 2014, Nikita Rousseau
+ * @license		GNU General Public License version 3.0 (GPLv3)
  * @link		http://www.bgpanel.net/
  */
 
 
 
 /**
- * Base CLASS for each BGP controller
+ * Base CLASS for each BGP controllers
  */
 
-class BGP_Controller
+class BGP_Controller extends BGP_Module
 {
-	function __construct( )	{
+	// Controller Definition
 
+	// None
+
+	function __construct( $module_name )	{
+
+		// Call module constructor
+		parent::__construct( $module_name );
 	}
 
-	public static function getLoggerName( $class_name ) {
-		return strtolower(str_replace( 'BGP_Controller_', '', $class_name )) . 'Logger';
+	public static function getLoggerName( ) {
+		return self::getModuleName( '.' );
 	}
 }

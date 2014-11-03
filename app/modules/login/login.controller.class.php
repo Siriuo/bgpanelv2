@@ -16,12 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  *
- * @categories	Games/Entertainment, Systems Administration
  * @package		Bright Game Panel V2
- * @author		warhawk3407 <warhawk3407@gmail.com> @NOSPAM
- * @copyleft	2014
- * @license		GNU General Public License version 3.0 (GPLv3)
  * @version		0.1
+ * @category	Systems Administration
+ * @author		warhawk3407 <warhawk3407@gmail.com> @NOSPAM
+ * @copyright	Copyleft 2014, Nikita Rousseau
+ * @license		GNU General Public License version 3.0 (GPLv3)
  * @link		http://www.bgpanel.net/
  */
 
@@ -36,6 +36,12 @@ if ( !class_exists('BGP_Controller')) {
 class BGP_Controller_Login extends BGP_Controller
 {
 
+	function __construct( )	{
+	
+		// Call parent constructor
+		parent::__construct( basename(__DIR__) );
+	}
+
 	public function authenticateUser( $form ) {
 		$errors			= array();  	// array to hold validation errors
 		$data 			= array(); 		// array to pass back data
@@ -44,11 +50,11 @@ class BGP_Controller_Login extends BGP_Controller
 
 		// validate the variables ======================================================
 
-		if (!v::alphanum($form['username'])) {
+		if ( empty($form['username']) || !v::alphanum($form['username']) ) {
 			$errors['username'] = T_('Username is required.');
 		}
 
-		if (empty($form['password'])) {
+		if ( empty($form['password']) ) {
 			$errors['password'] = T_('Password is required.');
 		}
 
@@ -163,7 +169,7 @@ class BGP_Controller_Login extends BGP_Controller
 
 			// Log Event
 			Logger::configure( bgp_get_log4php_conf_array() );
-			$logger = Logger::getLogger( self::getLoggerName( __CLASS__ ) );
+			$logger = Logger::getLogger( self::getLoggerName( ) );
 			$logger->info('Log in.');
 		}
 		else if (!empty($userResult)) {
@@ -229,7 +235,7 @@ class BGP_Controller_Login extends BGP_Controller
 
 			// Log Event
 			Logger::configure( bgp_get_log4php_conf_array() );
-			$logger = Logger::getLogger( self::getLoggerName( __CLASS__ ) );
+			$logger = Logger::getLogger( self::getLoggerName( ) );
 			$logger->info('Log in.');
 		}
 		else {
@@ -244,7 +250,7 @@ class BGP_Controller_Login extends BGP_Controller
 
 			// Log Event
 			Logger::configure( bgp_get_log4php_conf_array() );
-			$logger = Logger::getLogger( self::getLoggerName( __CLASS__ ) );
+			$logger = Logger::getLogger( self::getLoggerName( ) );
 			$logger->info('Login failure.');
 
 			// Messages
@@ -307,11 +313,11 @@ class BGP_Controller_Login extends BGP_Controller
 
 		// validate the variables ======================================================
 
-		if (!v::alphanum($form['username'])) {
+		if ( empty($form['username']) || !v::alphanum($form['username']) ) {
 			$errors['username'] = T_('Username is required.');
 		}
 
-		if (!v::email($form['email'])) {
+		if ( empty($form['email']) || !v::email($form['email']) ) {
 			$errors['email'] = T_('Email address is required.');
 		}
 
@@ -406,7 +412,7 @@ class BGP_Controller_Login extends BGP_Controller
 
 			// Log Event
 			Logger::configure( bgp_get_log4php_conf_array() );
-			$logger = Logger::getLogger( self::getLoggerName( __CLASS__ ) );
+			$logger = Logger::getLogger( self::getLoggerName( ) );
 			$logger->info('Password reset.');
 		}
 		else if ( !empty($userResult) && ($captcha_validation == TRUE) ) {
@@ -453,7 +459,7 @@ class BGP_Controller_Login extends BGP_Controller
 
 			// Log Event
 			Logger::configure( bgp_get_log4php_conf_array() );
-			$logger = Logger::getLogger( self::getLoggerName( __CLASS__ ) );
+			$logger = Logger::getLogger( self::getLoggerName( ) );
 			$logger->info('Password reset.');
 		}
 		else {
@@ -463,7 +469,7 @@ class BGP_Controller_Login extends BGP_Controller
 
 			// Log Event
 			Logger::configure( bgp_get_log4php_conf_array() );
-			$logger = Logger::getLogger( self::getLoggerName( __CLASS__ ) );
+			$logger = Logger::getLogger( self::getLoggerName( ) );
 			$logger->info('Bad password reset.');
 
 			// Messages

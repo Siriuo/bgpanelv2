@@ -16,12 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  *
- * @categories	Games/Entertainment, Systems Administration
  * @package		Bright Game Panel V2
- * @author		warhawk3407 <warhawk3407@gmail.com> @NOSPAM
- * @copyleft	2014
- * @license		GNU General Public License version 3.0 (GPLv3)
  * @version		0.1
+ * @category	Systems Administration
+ * @author		warhawk3407 <warhawk3407@gmail.com> @NOSPAM
+ * @copyright	Copyleft 2014, Nikita Rousseau
+ * @license		GNU General Public License version 3.0 (GPLv3)
  * @link		http://www.bgpanel.net/
  */
 
@@ -35,4 +35,9 @@ if ( !class_exists('BGP_Controller')) {
 
 class BGP_Controller_Admin_Dashboard extends BGP_Controller {
 
+	function __construct( )	{
+
+		// Call parent constructor
+		parent::__construct( basename(__DIR__) );
+	}
 }

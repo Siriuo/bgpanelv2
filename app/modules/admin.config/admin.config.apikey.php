@@ -16,12 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  *
- * @categories	Games/Entertainment, Systems Administration
  * @package		Bright Game Panel V2
- * @author		warhawk3407 <warhawk3407@gmail.com> @NOSPAM
- * @copyleft	2014
- * @license		GNU General Public License version 3.0 (GPLv3)
  * @version		0.1
+ * @category	Systems Administration
+ * @author		warhawk3407 <warhawk3407@gmail.com> @NOSPAM
+ * @copyright	Copyleft 2014, Nikita Rousseau
+ * @license		GNU General Public License version 3.0 (GPLv3)
  * @link		http://www.bgpanel.net/
  */
 
@@ -29,7 +29,7 @@
  * Load Plugin
  */
 
-require( MODS_DIR . '/admin.config/admin.config.class.php' );
+require( MODS_DIR . '/' . basename(__DIR__) . '/admin.config.class.php' );
 
 $module = new BGP_Module_Admin_Config_Apikey();
 
@@ -55,7 +55,20 @@ $gui->getHeader();
 ?>
 					<!-- CONTENTS -->
 					<div class="row">
+						<div class="alert alert-info" role="alert">
+							<strong><?php echo T_('Tip'); ?></strong><br />
+							<?php echo T_('Use this key to authenticate your application, in order to remotely access BGPanel components.'); ?><br />
+						</div>
+						<legend><?php echo T_('API Key'); ?>:</legend>
+						<div>
+							<pre class="text-center"><?php
+//------------------------------------------------------------------------------------------------------------+
 
+							echo APP_API_KEY;
+
+//------------------------------------------------------------------------------------------------------------+
+							?></pre>
+						</div>
 					</div>
 					<!-- END: CONTENTS -->
 

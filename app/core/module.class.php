@@ -16,12 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  *
- * @categories	Games/Entertainment, Systems Administration
  * @package		Bright Game Panel V2
- * @author		warhawk3407 <warhawk3407@gmail.com> @NOSPAM
- * @copyleft	2014
- * @license		GNU General Public License version 3.0 (GPLv3)
  * @version		0.1
+ * @category	Systems Administration
+ * @author		warhawk3407 <warhawk3407@gmail.com> @NOSPAM
+ * @copyright	Copyleft 2014, Nikita Rousseau
+ * @license		GNU General Public License version 3.0 (GPLv3)
  * @link		http://www.bgpanel.net/
  */
 
@@ -44,6 +44,9 @@ class BGP_Module
 		$json = json_encode($xml);
 		self::$module_definition = json_decode($json, TRUE);
 		self::$module_name = $module_name;
+
+		// Load Module Dependencies
+		self::requireDepends( );
 	}
 
 	public static function getModuleName( $format = '.' ) {
@@ -66,12 +69,18 @@ class BGP_Module
 		if (isset(self::$module_definition['module_info'][$info])) {
 			return self::$module_definition['module_info'][$info];
 		}
+		else {
+			return '';
+		}
 	}
 
 	public static function getModuleSetting( $setting = '' ) {
 
 		if (isset(self::$module_definition['module_settings'][$setting])) {
 			return self::$module_definition['module_settings'][$setting];
+		}
+		else {
+			return '';
 		}
 	}
 
@@ -80,12 +89,36 @@ class BGP_Module
 		if (isset(self::$module_definition['module_options'][$option])) {
 			return self::$module_definition['module_options'][$option];
 		}
+		else {
+			return '';
+		}
 	}
 
 	public static function getModuleDependencies( ) {
 
 		if (isset(self::$module_definition['module_dependencies'])) {
 			return self::$module_definition['module_dependencies'];
+		}
+		else {
+			return array();
+		}
+	}
+
+	public static function requireDepends( ) {
+	
+		$module_dependencies = self::getModuleDependencies( );
+	
+		if ( !empty($module_dependencies) && !empty($module_dependencies['php_libs']) ) {
+	
+			foreach ($module_dependencies['php_libs'] as $depend) {
+	
+				$requirement = LIBS_DIR	. '/' . $depend['require'];
+	
+				if ( file_exists( $requirement ) ) {
+	
+					require_once( $requirement );
+				}
+			}
 		}
 	}
 

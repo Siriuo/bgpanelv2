@@ -16,12 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  *
- * @categories	Games/Entertainment, Systems Administration
  * @package		Bright Game Panel V2
- * @author		warhawk3407 <warhawk3407@gmail.com> @NOSPAM
- * @copyleft	2014
- * @license		GNU General Public License version 3.0 (GPLv3)
  * @version		0.1
+ * @category	Systems Administration
+ * @author		warhawk3407 <warhawk3407@gmail.com> @NOSPAM
+ * @copyright	Copyleft 2014, Nikita Rousseau
+ * @license		GNU General Public License version 3.0 (GPLv3)
  * @link		http://www.bgpanel.net/
  */
 
@@ -43,9 +43,13 @@ if (!defined('LICENSE'))
  * Report all PHP errors:
  * error_reporting(E_ALL);
  * ini_set('display_errors', 1);
+ *
+ * !IMPORTANT: More options below
+ * !IMPORTANT: See [FlightPHP configuration]
  */
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
+
 
 
 // Start new or resume existing session
@@ -103,9 +107,9 @@ if ( !is_dir( CONF_DIR ) ) {
 
 
 // DEFINE INI CONSTANTS
-$CONFIG  = parse_ini_file( CONF_DB_INI, TRUE );
-$CONFIG += parse_ini_file( CONF_GENERAL_INI, TRUE );
-$CONFIG += parse_ini_file( CONF_SECRET_INI, TRUE );
+$CONFIG  = parse_ini_file( CONF_DB_INI );
+$CONFIG += parse_ini_file( CONF_GENERAL_INI );
+$CONFIG += parse_ini_file( CONF_SECRET_INI );
 
 foreach ($CONFIG as $setting => $value) {
 	define( $setting, $value );
@@ -186,6 +190,7 @@ catch (PDOException $e) {
 $bgpCoreInfo = simplexml_load_file( CORE_VERSION_FILE );
 
 if ( ENV_RUNTIME == 'DEFAULT' ) {
+
 	/**
 	 * VERSION CONTROL
 	 * Check that core files are compatible with the current BrightGamePanel Database
@@ -208,64 +213,82 @@ if ( ENV_RUNTIME == 'DEFAULT' ) {
 	}
 }
 
-/**
- * LOGGING Configuration
- * Apache Log4php configuration
- *
- * @link: http://logging.apache.org/log4php/docs/configuration.html
- */
-if ( CONF_LOGS_DIR != 'default' && is_writable( CONF_LOGS_DIR ) ) {
+if ( ENV_RUNTIME == 'DEFAULT' ) {
 
-	// Override default configuration
-	define( 'REAL_LOGGING_DIR', CONF_LOGS_DIR );
-}
-else {
+	/**
+	 * LOGGING Configuration
+	 * Apache Log4php configuration
+	 *
+	 * @link: http://logging.apache.org/log4php/docs/configuration.html
+	 */
+	if ( CONF_LOGS_DIR != 'default' && is_writable( CONF_LOGS_DIR ) ) {
 
-	// Default configuration
-	define( 'REAL_LOGGING_DIR', LOGS_DIR );
-}
+		// Override default configuration
+		define( 'REAL_LOGGING_DIR', CONF_LOGS_DIR );
+	}
+	else {
 
-function bgp_get_log4php_conf_array( ) {
-	return array(
-		'rootLogger' => array(
-			'appenders' => array('default')
-		),
-		'loggers' => array(
-			'coreLogger' => array(
-				'additivity' => false,
-				'appenders' => array('coreAppender')
-			)
-		),
-		'appenders' => array(
-			'default' => array(
-				'class' => 'LoggerAppenderFile',
-				'layout' => array(
-					'class' => 'LoggerLayoutPattern',
-					'params' => array(
-						'conversionPattern' => '[%date{Y-m-d H:i:s,u}] %-5level %-5.5session{COM} %-12session{USERNAME} %-3session{ID} %-15.15server{REMOTE_ADDR} %-35server{REQUEST_URI} %-35class %-20method "%msg"%n'
-					)
-				),
-				'params' => array(
-					'file' => REAL_LOGGING_DIR . '/' . date('Y-m-d') . '.txt',
-					'append' => true
+		// Default configuration
+		define( 'REAL_LOGGING_DIR', LOGS_DIR );
+	}
+
+	function bgp_get_log4php_conf_array( ) {
+		return array(
+			'rootLogger' => array(
+				'appenders' => array('default')
+			),
+			'loggers' => array(
+				'sys.core' => array(
+					'additivity' => false,
+					'appenders' => array('coreAppender')
 				)
 			),
-			'coreAppender' => array(
-				'class' => 'LoggerAppenderFile',
-				'layout' => array(
-					'class' => 'LoggerLayoutPattern',
+			'appenders' => array(
+				'default' => array(
+					'class' => 'LoggerAppenderFile',
+					'layout' => array(
+						'class' => 'LoggerLayoutPattern',
+						'params' => array(
+							'conversionPattern' => '[%date{Y-m-d H:i:s,u}] %-5level %-10.10logger %-5.5session{COM} %-12session{USERNAME} %-3session{ID} %-15.15server{REMOTE_ADDR} %-35server{REQUEST_URI} %-35class %-20method "%msg"%n'
+						)
+					),
 					'params' => array(
-						'conversionPattern' => '[%date{Y-m-d H:i:s,u}] %-5level Core System V2 localhost %-35class %-20method "%msg"%n'
+						'file' => REAL_LOGGING_DIR . '/' . date('Y-m-d') . '.txt',
+						'append' => true
 					)
 				),
-				'params' => array(
-					'file' => REAL_LOGGING_DIR . '/' . date('Y-m-d') . '.core.txt',
-					'append' => true
+				'coreAppender' => array(
+					'class' => 'LoggerAppenderFile',
+					'layout' => array(
+						'class' => 'LoggerLayoutPattern',
+						'params' => array(
+							'conversionPattern' => '[%date{Y-m-d H:i:s,u}] %-5level System Core V2 localhost %-35class %-20method "%msg"%n'
+						)
+					),
+					'params' => array(
+						'file' => REAL_LOGGING_DIR . '/' . date('Y-m-d') . '.core.txt',
+						'append' => true
+					)
 				)
 			)
-		)
-	);
+		);
+	}
+
+	/**
+	 * ROUTING Configuration
+	 * FlightPHP configuration
+	 *
+	 * flight.base_url - Override the base url of the request. (default: null)
+	 * flight.handle_errors - Allow Flight to handle all errors internally. (default: true)
+	 * flight.log_errors - Log errors to the web server's error log file. (default: false)
+	 * flight.views.path - Directory containing view template files (default: ./views)
+	 *
+	 * @link: http://flightphp.com/learn#configuration
+	 */
+	Flight::set('flight.handle_errors', TRUE);
+	Flight::set('flight.log_errors', FALSE);
 }
+
 
 // Clean Up
 unset( $CONFIG, $bgpCoreInfo );

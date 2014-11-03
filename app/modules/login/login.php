@@ -16,12 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  *
- * @categories	Games/Entertainment, Systems Administration
  * @package		Bright Game Panel V2
- * @author		warhawk3407 <warhawk3407@gmail.com> @NOSPAM
- * @copyleft	2014
- * @license		GNU General Public License version 3.0 (GPLv3)
  * @version		0.1
+ * @category	Systems Administration
+ * @author		warhawk3407 <warhawk3407@gmail.com> @NOSPAM
+ * @copyright	Copyleft 2014, Nikita Rousseau
+ * @license		GNU General Public License version 3.0 (GPLv3)
  * @link		http://www.bgpanel.net/
  */
 
@@ -29,7 +29,7 @@
  * Load Plugin
  */
 
-require( MODS_DIR . '/login/login.class.php' );
+require( MODS_DIR . '/' . basename(__DIR__) . '/login.class.php' );
 
 $loginModule = new BGP_Module_Login();
 
@@ -86,7 +86,7 @@ if ( $authService->isBanned() ) {
 												<div class="input-group-addon"><span class="glyphicon glyphicon-user"></span></div>
 												<input class="form-control" type="text" ng-model="formData.username" id="username" name="username" placeholder="<?php echo T_('Login'); ?>" required>
 											</div>
-											<span class="help-block" ng-show="errorUsername">{{ errorUsername }}</span>
+											<span class="help-block" ng-show="errorUsername" ng-bind="errorUsername"></span>
 										</div>
 
 										<div class="form-group" ng-class="{ 'has-error' : errorPassword }">
@@ -95,7 +95,7 @@ if ( $authService->isBanned() ) {
 												<div class="input-group-addon"><span class="glyphicon glyphicon-lock"></span></div>
 												<input class="form-control" type="password" ng-model="formData.password" id="password" name="password" placeholder="<?php echo T_('Password'); ?>" required>
 											</div>
-											<span class="help-block" ng-show="errorPassword">{{ errorPassword }}</span>
+											<span class="help-block" ng-show="errorPassword" ng-bind="errorPassword"></span>
 										</div>
 
 										<div class="checkbox">
