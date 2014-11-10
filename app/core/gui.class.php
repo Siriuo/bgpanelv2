@@ -267,10 +267,54 @@ class Core_GUI
 //------------------------------------------------------------------------------------------------------------+
 ?>
 					<!-- ALERTS -->
-					<div id="message" class="alert alert-dismissible" role="alert" ng-show="msg" ng-class="'alert-' + msgType">
+					<div id="msg" class="alert alert-dismissible" role="alert" ng-show="msg" ng-class="'alert-' + msgType">
 						<button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
 						<strong ng-bind="msg"></strong>
 					</div>
+<?php
+//------------------------------------------------------------------------------------------------------------+
+
+		/**
+		 * Alerts Handler
+		 */
+
+		if ( !empty($_SESSION['ALERT']) && !empty($_SESSION['ALERT']['MSG-TYPE']) )
+		{
+
+//------------------------------------------------------------------------------------------------------------+
+?>
+					<div id="alert" class="alert alert-dismissible alert-<?php echo htmlspecialchars( $_SESSION['ALERT']['MSG-TYPE'], ENT_QUOTES ); ?>" role="alert">
+						<button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+<?php
+//------------------------------------------------------------------------------------------------------------+
+
+			if (!empty($_SESSION['ALERT']['MSG-STRONG'])) {
+//------------------------------------------------------------------------------------------------------------+
+?>
+						<strong><?php echo htmlspecialchars( $_SESSION['ALERT']['MSG-STRONG'], ENT_QUOTES ); ?></strong>&nbsp;
+<?php
+//------------------------------------------------------------------------------------------------------------+
+			}
+
+			if (!empty($_SESSION['ALERT']['MSG-BODY'])) {
+//------------------------------------------------------------------------------------------------------------+
+?>
+						<?php echo htmlspecialchars( $_SESSION['ALERT']['MSG-BODY'], ENT_QUOTES ); ?>
+<?php
+//------------------------------------------------------------------------------------------------------------+
+			}
+
+//------------------------------------------------------------------------------------------------------------+
+?>	
+					</div>
+<?php
+//------------------------------------------------------------------------------------------------------------+
+
+			unset($_SESSION['ALERT']);
+		}
+
+//------------------------------------------------------------------------------------------------------------+
+?>
 					<!-- END: ALERTS -->
 
 <?php
@@ -455,7 +499,7 @@ class Core_GUI
 //------------------------------------------------------------------------------------------------------------+
 ?>
 					<ol class="navbar-breadcrumbs">
-						<li class="active"><span class="glyphicon glyphicon-home"></span>&nbsp;<?php echo T_('Home'); ?></li>
+						<li><a href="#"><span class="fa fa-home fa-fw"></span><?php echo T_('Home'); ?></a></li>
 <?php
 //------------------------------------------------------------------------------------------------------------+
 
@@ -463,14 +507,14 @@ class Core_GUI
 //------------------------------------------------------------------------------------------------------------+
 ?>
 						<li><a href="<?php echo $this->parent_module_href; ?>"><?php echo htmlspecialchars( $this->parent_module_title, ENT_QUOTES ); ?></a></li>
-						<li class="active"><?php echo htmlspecialchars( $this->module_title, ENT_QUOTES ); ?></li>
+						<li class="active"><a><?php echo htmlspecialchars( $this->module_title, ENT_QUOTES ); ?></a></li>
 <?php
 //------------------------------------------------------------------------------------------------------------+
 			}
 			else {
 //------------------------------------------------------------------------------------------------------------+
 ?>
-						<li class="active"><?php echo htmlspecialchars( $this->module_title, ENT_QUOTES ); ?></li>
+						<li class="active"><a><?php echo htmlspecialchars( $this->module_title, ENT_QUOTES ); ?></a></li>
 <?php
 //------------------------------------------------------------------------------------------------------------+
 			}
@@ -509,6 +553,7 @@ class Core_GUI
 				<div class="navbar-default sidebar" role="navigation">
 					<div class="sidebar-nav navbar-collapse">
 						<ul class="nav" id="side-menu">
+							<li id="side-title"><?php echo T_('Menu'); ?></li>
 <?php
 //------------------------------------------------------------------------------------------------------------+
 
@@ -668,16 +713,13 @@ class Core_GUI
 					echo "class=\"active\"";
 				}
 
-				?>><a href="<?php
+				?>><a <?php
 
-				if ($key == $activeTab) {
-					echo "#";
-				}
-				else {
-					echo $tab['href'];
+				if ($key != $activeTab) {
+					echo "href=\"" . $tab['href'] . "\"";
 				}
 
-				?>"><i class="<?php echo $tab['icon']; ?>"></i>&nbsp;<?php echo ucfirst( T_( $key ) ); ?></a></li>
+				?>><i class="<?php echo $tab['icon']; ?>"></i>&nbsp;<?php echo ucfirst( T_( $key ) ); ?></a></li>
 <?php
 //------------------------------------------------------------------------------------------------------------+
 
@@ -779,42 +821,46 @@ class Core_GUI
 
 			// XML Object to Array
 
-			foreach( $manifestFiles as $manifest ) {
+			foreach( $manifestFiles as $manifest )
+			{
+				if (!empty($manifest->{'module_sidebar'}))
+				{
 
-				$txt  = (string)$manifest->{'module_sidebar'}->txt;
-				$rank = (int)$manifest->{'module_sidebar'}->rank;
+					$txt  = (string)$manifest->{'module_sidebar'}->txt;
+					$rank = (int)$manifest->{'module_sidebar'}->rank;
 
-				$item[$txt]['rank'] = $rank;
-				$item[$txt]['href'] = (string)$manifest->{'module_sidebar'}->href;
-				$item[$txt]['icon'] = (string)$manifest->{'module_sidebar'}->icon;
+					$item[$txt]['rank'] = $rank;
+					$item[$txt]['href'] = (string)$manifest->{'module_sidebar'}->href;
+					$item[$txt]['icon'] = (string)$manifest->{'module_sidebar'}->icon;
 
-				// Processing sub-menu if any
+					// Processing sub-menu if any
 
-				if ( !empty($manifest->{'module_sidebar'}->{'sub_menu'}) ) {
-					
-					$sub_menu = (array)$manifest->{'module_sidebar'}->{'sub_menu'};
+					if ( !empty($manifest->{'module_sidebar'}->{'sub_menu'}) ) {
+						
+						$sub_menu = (array)$manifest->{'module_sidebar'}->{'sub_menu'};
 
-					foreach ($sub_menu as $sub_menu_key => $sub_menu_item) {
+						foreach ($sub_menu as $sub_menu_key => $sub_menu_item) {
 
-						$sub_menu_item = (array)$sub_menu_item;
+							$sub_menu_item = (array)$sub_menu_item;
 
-						foreach ($sub_menu_item as $sub_menu_item_href => $sub_menu_item_link) {
+							foreach ($sub_menu_item as $sub_menu_item_href => $sub_menu_item_link) {
 
-							$sub_menu_item_href = (string)$sub_menu_item_href;
+								$sub_menu_item_href = (string)$sub_menu_item_href;
 
-							// Push to array
+								// Push to array
 
-							$item[$txt]['sub_menu'][$sub_menu_key][$sub_menu_item_href]['href'] = (string)$sub_menu_item_link->{'href'};
-							$item[$txt]['sub_menu'][$sub_menu_key][$sub_menu_item_href]['icon'] = (string)$sub_menu_item_link->{'icon'};
+								$item[$txt]['sub_menu'][$sub_menu_key][$sub_menu_item_href]['href'] = (string)$sub_menu_item_link->{'href'};
+								$item[$txt]['sub_menu'][$sub_menu_key][$sub_menu_item_href]['icon'] = (string)$sub_menu_item_link->{'icon'};
+							}
 						}
 					}
-				}
-				else {
+					else {
 
-					$item[$txt]['sub_menu'] = array();
-				}
+						$item[$txt]['sub_menu'] = array();
+					}
 
-				$items = array_merge($items, $item); // Push
+					$items = array_merge($items, $item); // Push
+				}
 			}
 
 			$sideBarItems = array();
@@ -866,17 +912,21 @@ class Core_GUI
 		// Get the manifest
 		$manifest = MODS_DIR . '/' . $this->module_name . '/gui.manifest.xml';
 		
-		if (is_file( $manifest )) {
+		if (is_file( $manifest ))
+		{
 			$manifest = simplexml_load_file( $manifest );
 
-			$tabs = $manifest->{'module_tabs'};
-			
-			foreach ($tabs as $tab) {
+			if (!empty($manifest->{'module_tabs'}))
+			{
+				$tabs = $manifest->{'module_tabs'};
+				
+				foreach ($tabs as $tab) {
 
-				foreach ($tab as $key => $value) {
+					foreach ($tab as $key => $value) {
 
-					$items[ $key ][ 'href' ] = (string)$manifest->{'module_tabs'}->$key->href;
-					$items[ $key ][ 'icon' ] = (string)$manifest->{'module_tabs'}->$key->icon;
+						$items[ $key ][ 'href' ] = (string)$manifest->{'module_tabs'}->$key->href;
+						$items[ $key ][ 'icon' ] = (string)$manifest->{'module_tabs'}->$key->icon;
+					}
 				}
 			}
 		}
