@@ -627,6 +627,31 @@ else if ($_GET['step'] == 'one')
 
 	if (!defined('APP_API_KEY'))
 	{
+		if (is_writable( CONF_API_INI ))
+		{
+?>
+						<tr class="success">
+							<td>Checking for API configuration file write permission</td>
+							<td><span class="label label-success">OK</span></td>
+							<td></td>
+						</tr>
+<?php
+		}
+		else
+		{
+?>
+						<tr class="error">
+							<td>Checking for API configuration file write permission</td>
+							<td><span class="label label-important">FAILED</span></td>
+							<td></td>
+						</tr>
+<?php
+			$error = TRUE;
+		}
+	}
+
+	if (!defined('APP_SSH_KEY'))
+	{
 		if (is_writable( CONF_SECRET_INI ))
 		{
 ?>
@@ -864,16 +889,17 @@ else if ($_GET['step'] == 'three')
 			$APP_SSH_KEY 		= hash('sha512', md5(str_shuffle(time()))); usleep( rand(1, 1000) );
 			$APP_STEAM_KEY		= hash('sha512', md5(str_shuffle(time()))); usleep( rand(1, 1000) );
 			$APP_AUTH_SALT		= hash('sha512', md5(str_shuffle(time()))); usleep( rand(1, 1000) );
-			$APP_LOGGED_IN_KEY 	= hash('sha512', md5(str_shuffle(time())));
+			$APP_LOGGED_IN_KEY 	= hash('sha512', md5(str_shuffle(time()))); usleep( rand(1, 1000) );
+			$APP_SESSION_KEY	= hash('sha512', md5(str_shuffle(time())));
 
 			if (is_writable( CONF_SECRET_INI )) {
 				$handle = fopen( CONF_SECRET_INI, 'w');
 				$data = "; SECURITY KEYS FILE
-APP_API_KEY 		= \"".$APP_API_KEY."\"
 APP_SSH_KEY 		= \"".$APP_SSH_KEY."\"
 APP_STEAM_KEY		= \"".$APP_STEAM_KEY."\"
 APP_AUTH_SALT		= \"".$APP_AUTH_SALT."\"
 APP_LOGGED_IN_KEY 	= \"".$APP_LOGGED_IN_KEY."\"
+APP_SESSION_KEY 	= \"".$APP_SESSION_KEY."\"
 ";
 				fwrite($handle, $data);
 				fclose($handle);
@@ -881,6 +907,19 @@ APP_LOGGED_IN_KEY 	= \"".$APP_LOGGED_IN_KEY."\"
 			}
 			else {
 				exit('Critical error while installing ! Unable to write to /conf/secret.keys.ini !');
+			}
+
+			if (is_writable( CONF_API_INI )) {
+				$handle = fopen( CONF_API_INI, 'w');
+				$data = "; API CONFIGURATION FILE
+APP_API_KEY 		= \"".$APP_API_KEY."\"
+";
+				fwrite($handle, $data);
+				fclose($handle);
+				unset($handle);
+			}
+			else {
+				exit('Critical error while installing ! Unable to write to /conf/api.conf.ini !');
 			}
 
 			//---------------------------------------------------------+

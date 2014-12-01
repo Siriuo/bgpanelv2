@@ -38,8 +38,14 @@ class Core_AuthService
 	// Encrypted Session
 	private $session = array();
 
+	// Hash Salt
+	public $auth_salt;
+
 	// Authentication Passphrase
 	private $auth_key;
+
+	// Session Passphrase
+	private $session_key;
 
 	// RSA Keys
 	private $rsa_private_key;
@@ -48,15 +54,11 @@ class Core_AuthService
 	/**
 	 * Default Constructor
 	 *
-	 * @param String $auth_key
-	 * @param String $rsa_private_key
-	 * @param String $rsa_public_key
 	 * @return void
 	 * @access public
 	 */
-	function __construct( $auth_key = APP_LOGGED_IN_KEY, $rsa_private_key = RSA_PRIVATE_KEY, $rsa_public_key = RSA_PUBLIC_KEY )
+	function __construct()
 	{
-
 		if ( !empty($_SESSION['USERNAME']) ) {
 			$this->username = $_SESSION['USERNAME'];
 		}
@@ -66,13 +68,36 @@ class Core_AuthService
 
 		$this->session = $_SESSION;
 
-		if ( !empty($auth_key) && !empty($rsa_private_key) && !empty($rsa_public_key) ) {
-			$this->auth_key = $auth_key;
-			$this->rsa_private_key = $rsa_private_key;
-			$this->rsa_public_key =  $rsa_public_key;
+
+		// SECRET KEYS
+		$CONFIG = parse_ini_file( CONF_SECRET_INI );
+
+
+		// AUTH SALT
+		$this->auth_salt = $CONFIG['APP_AUTH_SALT'];
+		if ( empty($this->auth_salt) ) {
+			trigger_error("Core_AuthService -> Auth salt is missing !", E_USER_ERROR);
 		}
-		else {
-			trigger_error("Core_AuthService -> Auth keys are missing !", E_USER_ERROR);
+
+		// LOGGED IN KEY
+		$this->auth_key = $CONFIG['APP_LOGGED_IN_KEY'];
+		if ( empty($this->auth_key) ) {
+			trigger_error("Core_AuthService -> Auth key is missing !", E_USER_ERROR);
+		}
+
+		// SESSION KEY
+		$this->session_key = $CONFIG['APP_SESSION_KEY'];
+		if ( empty($this->session_key) ) {
+			trigger_error("Core_AuthService -> Session key is missing !", E_USER_ERROR);
+		}
+
+		// RSA KEYS
+		if ( file_exists(RSA_PRIVATE_KEY_FILE) && file_exists(RSA_PUBLIC_KEY_FILE) ) {
+			$this->rsa_private_key = file_get_contents( RSA_PRIVATE_KEY_FILE );
+			$this->rsa_public_key  = file_get_contents( RSA_PUBLIC_KEY_FILE );
+		}
+		if ( empty($this->rsa_private_key) || empty($this->rsa_public_key) ) {
+			trigger_error("Core_AuthService -> RSA keys are missing !", E_USER_ERROR);
 		}
 	}
 
@@ -101,16 +126,13 @@ class Core_AuthService
 	/**
 	 * Service Handler
 	 *
-	 * @param String $auth_key
-	 * @param String $rsa_private_key
-	 * @param String $rsa_public_key
 	 * @return Core_AuthService
 	 * @access public
 	 */
-	public static function getAuthService( $auth_key = APP_LOGGED_IN_KEY, $rsa_private_key = RSA_PRIVATE_KEY, $rsa_public_key = RSA_PUBLIC_KEY ) {
-		if ( empty(self::$authService) || !is_object(self::$authService) || (get_class(self::$authService) != 'Core_AuthService') ) {
-
-			self::$authService = new Core_AuthService( $auth_key, $rsa_private_key, $rsa_public_key );
+	public static function getAuthService() {
+		if ( empty(self::$authService) || !is_object(self::$authService) || (get_class(self::$authService) != 'Core_AuthService') )
+		{
+			self::$authService = new Core_AuthService();
 		}
 
 		return self::$authService;
@@ -272,12 +294,13 @@ class Core_AuthService
 	 * Generate a hash value (message digest)
 	 *
 	 * @param String $data
-	 * @param String $salt
 	 * @return String
 	 * @access public
 	 */
-	public static function getHash( $data, $salt = APP_AUTH_SALT ) {
-		return hash( 'sha512', $salt . $data );
+	public static function getHash( $data ) {
+		$authService = Core_AuthService::getAuthService();
+
+		return hash( 'sha512', $authService->auth_salt . $data );
 	}
 
 	/**
@@ -396,6 +419,22 @@ class Core_AuthService
 	}
 
 	/**
+	 * Retrieves from the session the specified information by key
+	 *
+	 * @param String $info
+	 * @return String
+	 * @access public
+	 */
+	public static function getSessionInfo( $info ) {
+		if (!empty($_SESSION[ $info ])) {
+			return $_SESSION[ $info ];
+		}
+		else {
+			return '';
+		}
+	}
+
+	/**
 	 * Remove Information From The Session
 	 *
 	 * @param none
@@ -442,11 +481,25 @@ class Core_AuthService
 					)
 				);
 
-				$rsa = new Crypt_RSA();
-				$rsa->loadKey( $this->rsa_public_key ); // public key
+				switch ( CONF_SEC_SESSION_METHOD )
+				{
+					case 'aes256':
+						$cipher = new Crypt_AES(CRYPT_AES_MODE_ECB);
+						$cipher->setKeyLength(256);
+						$cipher->setKey( $this->session_key );
 
-				$rsa->setEncryptionMode(CRYPT_RSA_ENCRYPTION_PKCS1);
-				$this->session['CREDENTIALS'] = $rsa->encrypt( $credentials );
+						$this->session['CREDENTIALS'] = $cipher->encrypt( $credentials );
+						break;
+
+					case 'rsa':
+					default:
+						$rsa = new Crypt_RSA();
+						$rsa->loadKey( $this->rsa_public_key ); // public key
+
+						$rsa->setEncryptionMode(CRYPT_RSA_ENCRYPTION_PKCS1);
+						$this->session['CREDENTIALS'] = $rsa->encrypt( $credentials );
+						break;
+				}
 
 				$_SESSION = $this->session;
 			}
@@ -477,11 +530,25 @@ class Core_AuthService
 	 */
 	private function decryptSessionCredentials() {
 		if ( !empty($this->session) && array_key_exists('CREDENTIALS', $this->session) ) {
-			$rsa = new Crypt_RSA();
-			$rsa->loadKey( $this->rsa_private_key ); // private key
+			switch ( CONF_SEC_SESSION_METHOD )
+			{
+				case 'aes256':
+					$cipher = new Crypt_AES(CRYPT_AES_MODE_ECB);
+					$cipher->setKeyLength(256);
+					$cipher->setKey( $this->session_key );
 
-			$rsa->setEncryptionMode(CRYPT_RSA_ENCRYPTION_PKCS1);
-			$credentials = unserialize( $rsa->decrypt( $this->session['CREDENTIALS'] ) );
+					$credentials = unserialize( $cipher->decrypt( $this->session['CREDENTIALS'] ) );
+					break;
+
+				case 'rsa':
+				default:
+					$rsa = new Crypt_RSA();
+					$rsa->loadKey( $this->rsa_private_key ); // private key
+
+					$rsa->setEncryptionMode(CRYPT_RSA_ENCRYPTION_PKCS1);
+					$credentials = unserialize( $rsa->decrypt( $this->session['CREDENTIALS'] ) );
+					break;
+			}
 
 			return $credentials;
 		}
