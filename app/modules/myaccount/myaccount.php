@@ -20,7 +20,7 @@
  * @version		0.1
  * @category	Systems Administration
  * @author		warhawk3407 <warhawk3407@gmail.com> @NOSPAM
- * @copyright	Copyleft 2014, Nikita Rousseau
+ * @copyright	Copyleft 2015, Nikita Rousseau
  * @license		GNU General Public License version 3.0 (GPLv3)
  * @link		http://www.bgpanel.net/
  */
@@ -61,10 +61,10 @@ $languages = parse_ini_file( CONF_LANG_INI );
 
 $dbh = Core_DBH::getDBH(); // Get Database Handle
 
-$role = strtolower(Core_AuthService::getSessionPrivilege()); // Get user role
+$type = strtolower(Core_AuthService::getSessionType()); // Get user type
 $uid = Core_AuthService::getSessionInfo('ID'); // Get user id
 
-if ($role == 'admin') {
+if ($type == 'admin') {
 
 	$sth = $dbh->prepare("
 	SELECT *

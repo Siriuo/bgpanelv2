@@ -20,7 +20,7 @@
  * @version		0.1
  * @category	Systems Administration
  * @author		warhawk3407 <warhawk3407@gmail.com> @NOSPAM
- * @copyright	Copyleft 2014, Nikita Rousseau
+ * @copyright	Copyleft 2015, Nikita Rousseau
  * @license		GNU General Public License version 3.0 (GPLv3)
  * @link		http://www.bgpanel.net/
  */
@@ -109,7 +109,64 @@ class BGP_Controller_Myaccount extends BGP_Controller {
 			$db_data['email']				= $form['email'];
 			$db_data['lang']				= $form['language'];
 
+			$authService = Core_AuthService::getAuthService();
+			$uid = Core_AuthService::getSessionInfo('ID');
 
+			foreach ($db_data as $key => $value) {
+
+				if (Core_AuthService::getSessionType() == 'Admin') {
+					$sth = $dbh->prepare( "	UPDATE " . DB_PREFIX . "admin
+											SET " . $key . " = :" . $key . "
+											WHERE admin_id = '" . $uid . "';" );
+				}
+				else if (Core_AuthService::getSessionType() == 'User') {
+					$sth = $dbh->prepare( "	UPDATE " . DB_PREFIX . "user
+											SET " . $key . " = :" . $key . "
+											WHERE user_id = '" . $uid . "';" );
+				}
+				else {
+					exit(1);
+				}
+
+				$sth->bindParam( ':' . $key, $value );
+				$sth->execute();
+			}
+
+			// Reload Session
+			$authService->rmSessionInfo();
+
+			switch (Core_AuthService::getSessionType()) {
+				case 'Admin':
+					$authService->setSessionInfo(
+						$uid,
+						$db_data['username'],
+						$db_data['firstname'],
+						$db_data['lastname'],
+						$db_data['lang'],
+						BGP_ADMIN_TEMPLATE,
+						'Admin'
+						);
+					$authService->setSessionPerms( 'Admin' );
+					break;
+
+				case 'User':
+					$authService->setSessionInfo(
+						$uid,
+						$db_data['username'],
+						$db_data['firstname'],
+						$db_data['lastname'],
+						$db_data['lang'],
+						BGP_USER_TEMPLATE,
+						'User'
+						);
+					$authService->setSessionPerms( 'User' );
+					break;
+
+				default:
+					exit(1);
+			}
+
+			$this->rmCookie( 'LANG' );
 		}
 
 		// return a response ===========================================================
@@ -134,5 +191,9 @@ class BGP_Controller_Myaccount extends BGP_Controller {
 		
 		// return all our data to an AJAX call
 		return json_encode($data);
+	}
+
+	private function rmCookie( $cookie ) {
+		setcookie($cookie, '', time() - 3600, BASE_URL);
 	}
 }

@@ -25,20 +25,39 @@
  * @link		http://www.bgpanel.net/
  */
 
-if ( !class_exists('BGP_Module')) {
-	trigger_error('Module_Admin_Dashboard -> BGP_Module is missing !');
-}
-
 /**
- * Admin Dashboard Module
+ * Load Plugin Controller
  */
 
-class BGP_Module_Admin_Dashboard extends BGP_Module {
+require( MODS_DIR . '/' . basename(__DIR__) . '/admin.tools.controller.class.php' );
 
-	function __construct( )	{
+// Init Controller
+$controller = new BGP_Controller_Admin_Tools();
 
-		// Call parent constructor
-		parent::__construct( basename(__DIR__) );
-	}
 
+// Get the method
+if ( isset($_POST['task']) ) {
+	$task = $_POST['task'];
+	unset($_POST['task']);
 }
+else if ( isset($_GET['task']) ) {
+	$task = $_GET['task'];
+	unset($_GET['task']);
+}
+else {
+	$task = 'None';
+}
+
+
+// Call the method
+switch ($task)
+{
+	case 'optimizeDB':
+		echo $controller->optimizeDB( $_POST );
+		exit( 0 );
+
+	default:
+		Flight::redirect('/400');
+}
+
+Flight::redirect('/403');

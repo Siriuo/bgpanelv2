@@ -20,7 +20,7 @@
  * @version		0.1
  * @category	Systems Administration
  * @author		warhawk3407 <warhawk3407@gmail.com> @NOSPAM
- * @copyright	Copyleft 2014, Nikita Rousseau
+ * @copyright	Copyleft 2015, Nikita Rousseau
  * @license		GNU General Public License version 3.0 (GPLv3)
  * @link		http://www.bgpanel.net/
  */
@@ -37,7 +37,7 @@ class Core_Lang {
 	 * Example (French):
 	 *		./app/locale/fr_FR/LC_MESSAGES/messages.mo
 	 */
-	public static function setLanguage( $lang = 'en_EN') {
+	public static function setLanguage( $lang = 'en_EN' ) {
 		$encoding = 'UTF-8';
 		$languages = parse_ini_file( CONF_LANG_INI );
 

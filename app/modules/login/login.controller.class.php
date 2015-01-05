@@ -20,7 +20,7 @@
  * @version		0.1
  * @category	Systems Administration
  * @author		warhawk3407 <warhawk3407@gmail.com> @NOSPAM
- * @copyright	Copyleft 2014, Nikita Rousseau
+ * @copyright	Copyleft 2015, Nikita Rousseau
  * @license		GNU General Public License version 3.0 (GPLv3)
  * @link		http://www.bgpanel.net/
  */
@@ -135,6 +135,8 @@ class BGP_Controller_Login extends BGP_Controller
 					'Admin'
 					);
 
+				session_regenerate_id();
+
 				$authService->setSessionPerms( 'Admin' );
 
 				// Database update
@@ -200,6 +202,8 @@ class BGP_Controller_Login extends BGP_Controller
 					BGP_USER_TEMPLATE,
 					'User'
 					);
+
+				session_regenerate_id();
 
 				$authService->setSessionPerms( 'User' );
 

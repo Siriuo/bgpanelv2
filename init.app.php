@@ -20,7 +20,7 @@
  * @version		0.1
  * @category	Systems Administration
  * @author		warhawk3407 <warhawk3407@gmail.com> @NOSPAM
- * @copyright	Copyleft 2014, Nikita Rousseau
+ * @copyright	Copyleft 2015, Nikita Rousseau
  * @license		GNU General Public License version 3.0 (GPLv3)
  * @link		http://www.bgpanel.net/
  */
@@ -76,7 +76,6 @@ define('APP_DIR', BASE_DIR . '/app');
 define('CONF_DIR', BASE_DIR . '/conf');
 	define('CONF_API_INI', CONF_DIR . '/api.conf.ini');
 	define('CONF_DB_INI', CONF_DIR . '/db.conf.ini');
-	define('CONF_G_BIN_INI', CONF_DIR . '/game-binaries.ini');
 	define('CONF_GENERAL_INI', CONF_DIR . '/general.conf.ini');
 	define('CONF_LANG_INI', CONF_DIR . '/languages.ini');
 	define('CONF_SECRET_INI', CONF_DIR . '/secret.keys.ini');

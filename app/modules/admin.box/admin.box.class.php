@@ -20,7 +20,7 @@
  * @version		0.1
  * @category	Systems Administration
  * @author		warhawk3407 <warhawk3407@gmail.com> @NOSPAM
- * @copyright	Copyleft 2014, Nikita Rousseau
+ * @copyright	Copyleft 2015, Nikita Rousseau
  * @license		GNU General Public License version 3.0 (GPLv3)
  * @link		http://www.bgpanel.net/
  */
@@ -41,4 +41,22 @@ class BGP_Module_Admin_Box extends BGP_Module {
 		parent::__construct( basename(__DIR__) );
 	}
 
+}
+
+/**
+ * Admin Box Module
+ * Page: Delete Box
+ * Title: Delete Box
+ */
+
+class BGP_Module_Admin_Box_Del extends BGP_Module_Admin_Box {
+
+	function __construct( )	{
+
+		// Call parent constructor
+		parent::__construct( );
+
+		// Override module title
+		self::$module_definition['module_settings']['title'] = 'Delete Box';
+	}
 }

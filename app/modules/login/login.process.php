@@ -20,7 +20,7 @@
  * @version		0.1
  * @category	Systems Administration
  * @author		warhawk3407 <warhawk3407@gmail.com> @NOSPAM
- * @copyright	Copyleft 2014, Nikita Rousseau
+ * @copyright	Copyleft 2015, Nikita Rousseau
  * @license		GNU General Public License version 3.0 (GPLv3)
  * @link		http://www.bgpanel.net/
  */
@@ -73,7 +73,7 @@ switch ($task)
 
 		if (!empty($_GET['namespace'])) $img->setNamespace($_GET['namespace']);
 
-		$img->show();  // outputs the image and content headers to the browser
+		$img->show();  // Outputs the image and content headers to the browser
 
 		exit( 0 );
 

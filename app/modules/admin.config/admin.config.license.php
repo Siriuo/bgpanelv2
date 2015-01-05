@@ -31,7 +31,7 @@
 
 require( MODS_DIR . '/' . basename(__DIR__) . '/admin.config.class.php' );
 
-$module = new BGP_Module_Admin_Config_Apikey();
+$module = new BGP_Module_Admin_Config_License();
 
 /**
  * Call GUI Builder
@@ -59,19 +59,21 @@ $gui->getHeader();
 							<div class="panel panel-default">
 								<div class="panel-body">
 
-									<div class="alert alert-info" role="alert">
-										<strong><?php echo T_('Tip'); ?></strong><br />
-										<?php echo T_('Use this key to authenticate your application, in order to remotely access BGPanel components.'); ?><br />
-									</div>
-									<legend><?php echo T_('API Key'); ?>:</legend>
-									<div>
-										<pre class="text-center"><?php
+									<div style="width:auto;height:480px;overflow:scroll;overflow-y:scroll;overflow-x:hidden;">
+<?php
 //------------------------------------------------------------------------------------------------------------+
 
-										echo APP_API_KEY;
+$license = fopen( MODS_DIR . '/' . basename(__DIR__) . './res/LICENSE', 'r' );
+
+while ($rows = fgets($license))
+{
+	echo $rows.'<br />';
+}
+
+fclose($license);
 
 //------------------------------------------------------------------------------------------------------------+
-										?></pre>
+?>
 									</div>
 
 								</div>

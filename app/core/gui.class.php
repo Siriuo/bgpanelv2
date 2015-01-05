@@ -20,7 +20,7 @@
  * @version		0.1
  * @category	Systems Administration
  * @author		warhawk3407 <warhawk3407@gmail.com> @NOSPAM
- * @copyright	Copyleft 2014, Nikita Rousseau
+ * @copyright	Copyleft 2015, Nikita Rousseau
  * @license		GNU General Public License version 3.0 (GPLv3)
  * @link		http://www.bgpanel.net/
  */
@@ -111,7 +111,7 @@ class Core_GUI
 			return $_SESSION['TEMPLATE'];
 		}
 		else {
-			switch (Core_AuthService::getSessionPrivilege()) {
+			switch (Core_AuthService::getSessionType()) {
 				case 'Admin':
 					return BGP_ADMIN_TEMPLATE;
 
@@ -164,12 +164,35 @@ class Core_GUI
 
 		<base href="<?php echo BASE_URL; ?>">
 
+		<!-- Style -->
+			<!-- Bootstrap 3 -->
+			<link href="./gui/bootstrap3/css/<?php echo htmlspecialchars( Core_GUI::getBS3Template(), ENT_QUOTES ); ?>" rel="stylesheet">
+			<!-- MetisMenu -->
+			<link href="./gui/metisMenu/css/metisMenu.min.css" rel="stylesheet">
+			<!-- Font Awesome 4 -->
+			<link href="./gui/font-awesome/css/font-awesome.min.css" rel="stylesheet">
+			<link href="./gui/font-awesome/css/font-awesome-animation.min.css" rel="stylesheet">
+			<!-- DataTables -->
+			<link href="./gui/datatables/css/dataTables.bootstrap.css" rel="stylesheet">
+			<!-- SB Admin 2 -->
+			<link href="./gui/bootstrap3/css/dashboard.css" rel="stylesheet">
+<?php
+//------------------------------------------------------------------------------------------------------------+
+
+	// Load CSS Dependencies
+	echo $this->getCSSDepends();
+
+//------------------------------------------------------------------------------------------------------------+
+?>
 		<!-- Javascript -->
 			<script src="./gui/angularjs/js/angular.min.js"></script>
 			<script src="./gui/jquery/js/jquery-2.1.1.min.js"></script>
 			<script src="./gui/bootstrap3/js/bootstrap.min.js"></script>
 			<!-- Metis Menu Plugin -->
-    		<script src="./gui/metisMenu/js/metisMenu.min.js"></script>
+			<script src="./gui/metisMenu/js/metisMenu.min.js"></script>
+			<!-- DataTables -->
+			<script src="./gui/datatables/js/jquery.dataTables.js"></script>
+			<script src="./gui/datatables/js/dataTables.bootstrap.js"></script>
 			<!-- SB Admin 2 -->
 			<script src="./gui/bootstrap3/js/sb-admin-2.js"></script>
 <?php 
@@ -177,23 +200,6 @@ class Core_GUI
 
 	// Load JS Dependencies
 	echo $this->getJSDepends();
-
-//------------------------------------------------------------------------------------------------------------+
-?>
-		<!-- Style -->
-			<!-- Bootstrap 3 -->
-			<link href="./gui/bootstrap3/css/<?php echo htmlspecialchars( Core_GUI::getBS3Template(), ENT_QUOTES ); ?>" rel="stylesheet">
-			<!-- MetisMenu -->
-			<link href="./gui/metisMenu/css/metisMenu.min.css" rel="stylesheet">
-			<!-- SB Admin 2 -->
-			<link href="./gui/bootstrap3/css/dashboard.css" rel="stylesheet">
-			<!-- Font Awesome 4 -->
-			<link href="./gui/font-awesome/css/font-awesome.min.css" rel="stylesheet">
-<?php
-//------------------------------------------------------------------------------------------------------------+
-
-	// Load CSS Dependencies
-	echo $this->getCSSDepends();
 
 //------------------------------------------------------------------------------------------------------------+
 ?>
@@ -529,7 +535,26 @@ class Core_GUI
 				<!-- Flags -->
 				<li class="dropdown">
 					<a class="dropdown-toggle" data-toggle="dropdown" href="#">
-						<i class="fa fa-flag fa-fw"></i>  <i class="fa fa-caret-down"></i>
+<?php
+//------------------------------------------------------------------------------------------------------------+
+
+		if ( boolval(BGP_MAINTENANCE_MODE) === TRUE ) {
+//------------------------------------------------------------------------------------------------------------+
+?>
+						<i class="fa fa-flag fa-fw faa-float animated"></i>  <i class="fa fa-caret-down"></i>
+<?php
+//------------------------------------------------------------------------------------------------------------+
+		}
+		else {
+//------------------------------------------------------------------------------------------------------------+
+?>
+						<i class="fa fa-flag-o fa-fw"></i>  <i class="fa fa-caret-down"></i>
+<?php
+//------------------------------------------------------------------------------------------------------------+
+		}
+
+//------------------------------------------------------------------------------------------------------------+
+?>
 					</a>
 					<ul class="dropdown-menu dropdown-alerts" role="menu">
 						<li role="presentation" class="dropdown-header"><?php echo T_('System Alerts'); ?></li>
@@ -544,7 +569,21 @@ class Core_GUI
 							<a>
 								<div>
 									<i class="fa fa-exclamation-triangle fa-fw"></i>&nbsp;Maintenance Mode
-									<span class="pull-right text-muted small">In force</span>
+									<span class="pull-right text-muted small">Enabled</span>
+								</div>
+							</a>
+						</li>
+<?php
+//------------------------------------------------------------------------------------------------------------+
+		}
+		else {
+//------------------------------------------------------------------------------------------------------------+
+?>
+						<li>
+							<a>
+								<div>
+									<i class="fa fa-smile-o fa-fw"></i>&nbsp;Nothing to report
+									<span class="pull-right text-muted small"></span>
 								</div>
 							</a>
 						</li>
@@ -773,7 +812,7 @@ class Core_GUI
 	 */
 	private function parseGUIManifestFiles ()
 	{
-		$privilege = Core_AuthService::getSessionPrivilege();
+		$type = Core_AuthService::getSessionType();
 		$manifestFiles = array();
 		
 		$handle = opendir( MODS_DIR );
@@ -790,19 +829,19 @@ class Core_GUI
 					$parts = explode('.', $entry);
 		
 					if (!empty( $parts[1] )) {
-						$role = $parts[0];
+						$lowerTypeAlias = $parts[0];
 						$module = $parts[1];
 					}
 					else {
-						$role = NULL;
+						$lowerTypeAlias = NULL;
 						$module = $parts[0];
 					}
 		
 					// Case: "admin.module" OR "user.module"
-					if (!empty($role) && $privilege == ucfirst($role)) {
+					if (!empty($lowerTypeAlias) && $type == ucfirst($lowerTypeAlias)) {
 		
 						// Get the manifest
-						$manifest = MODS_DIR . '/' . $role . '.' . $module . '/gui.manifest.xml';
+						$manifest = MODS_DIR . '/' . $lowerTypeAlias . '.' . $module . '/gui.manifest.xml';
 		
 						if (is_file( $manifest )) {
 							$manifestFiles[] = simplexml_load_file( $manifest ); // Store the object
@@ -980,7 +1019,7 @@ class Core_GUI
 					<!-- FOOTER -->
 					<footer>
 						<div class="pull-left">
-							Copyleft <img id="footer-copyleft-logo" height="12" src="./gui/img/copyleft.png"> 2014. Released under the <a href="http://www.gnu.org/licenses/gpl.html" target="_blank">GPLv3</a>.<br />
+							Copyleft <img id="footer-copyleft-logo" height="12" src="./gui/img/copyleft.png"> 2015. Released under the <a href="http://www.gnu.org/licenses/gpl.html" target="_blank">GPLv3</a>.<br />
 							All images are copyrighted by their respective owners.
 						</div>
 

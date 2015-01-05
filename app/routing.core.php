@@ -20,7 +20,7 @@
  * @version		0.1
  * @category	Systems Administration
  * @author		warhawk3407 <warhawk3407@gmail.com> @NOSPAM
- * @copyright	Copyleft 2014, Nikita Rousseau
+ * @copyright	Copyleft 2015, Nikita Rousseau
  * @license		GNU General Public License version 3.0 (GPLv3)
  * @link		http://www.bgpanel.net/
  */
@@ -48,7 +48,7 @@ Flight::route('GET|POST /', function() {
 
 	$authService = Core_AuthService::getAuthService();
 
-	// Test if the user has a whitecard to access the system
+	// Test if the user is allowed to access the system
 
 	if ($authService->getSessionValidity() == FALSE) {
 
@@ -60,7 +60,7 @@ Flight::route('GET|POST /', function() {
 
 	// The user is already logged in
 	// Redirect to the Dashboard
-	switch (Core_AuthService::getSessionPrivilege()) {
+	switch (Core_AuthService::getSessionType()) {
 		case 'Admin':
 			Flight::redirect('/admin/dashboard');
 
@@ -68,7 +68,6 @@ Flight::route('GET|POST /', function() {
 			Flight::redirect('/user/dashboard');
 
 		default:
-			// Invalid Privilege
 			Core_AuthService::logout();
 			Flight::redirect('/login');
 	}
@@ -134,16 +133,18 @@ Flight::route('GET|POST /login(/@page)', function( $page ) {
 
 // Dynamically load the module VIEW | CONTROLLER
 // Note that the page "process" is the module controller
-Flight::route('GET|POST /@role(/@module(/@page))', function( $role, $module, $page ) {
+Flight::route('GET|POST /@type(/@module(/@page(/@id)))', function( $type, $module, $page, $id ) {
 
-	switch ($role)
+	switch ($type)
 	{
 		// [ADMIN]
 		case 'admin':
 
-			// Test Access Perms
 			if ( Core_AuthService::isAdmin() && !empty($module) )
 			{
+				// Update Admin Acivity
+				bgp_routing_update_user_activity( 'Admin' );
+
 				// Switch the view depending the task
 				if ( !empty($page) ) {
 					// Admin Controller OR subPage Invoked
@@ -155,7 +156,7 @@ Flight::route('GET|POST /@role(/@module(/@page))', function( $role, $module, $pa
 				}
 
 				// Call the module
-				bgp_routing_require_mod( $mod_path );
+				bgp_routing_require_mod( $mod_path, $id );
 			}
 			else if ( Core_AuthService::isUser() ) {
 				// A regular user has tried to access admin components
@@ -181,6 +182,9 @@ Flight::route('GET|POST /@role(/@module(/@page))', function( $role, $module, $pa
 					Flight::redirect('/503'); // If the maintenance mode is ON, we drop the user.
 				}
 
+				// Update User Acivity
+				bgp_routing_update_user_activity( 'User' );
+
 				if ( !empty($page) ) {
 					$mod_path = MODS_DIR . '/' . 'user.' . $module . '/' . 'user.' . $module . '.' . $page . '.php';
 				}
@@ -188,7 +192,7 @@ Flight::route('GET|POST /@role(/@module(/@page))', function( $role, $module, $pa
 					$mod_path = MODS_DIR . '/' . 'user.' . $module . '/' . 'user.' . $module . '.php';
 				}
 
-				bgp_routing_require_mod( $mod_path );
+				bgp_routing_require_mod( $mod_path, $id );
 			}
 			else if ( Core_AuthService::isAdmin() ) {
 				// Forbidden
@@ -205,13 +209,14 @@ Flight::route('GET|POST /@role(/@module(/@page))', function( $role, $module, $pa
 
 			// Switch the vars
 			if (!empty($module)) {
+				$id = $page;
 				$page = $module;
 			}
-			$module = $role;
-			unset($role);
+			$module = $type;
+			unset($type);
 
 			// MAINTENANCE CHECKER
-			if ( Core_AuthService::getSessionPrivilege() != 'Admin' ) {
+			if ( Core_AuthService::getSessionType() != 'Admin' ) {
 				if ( BGP_MAINTENANCE_MODE == 1 ) {
 					Core_AuthService::logout();
 					Flight::redirect('/503');
@@ -222,6 +227,10 @@ Flight::route('GET|POST /@role(/@module(/@page))', function( $role, $module, $pa
 
 			if ( $authService->getSessionValidity() == TRUE && !empty($module) )
 			{
+
+				// Update User Acivity
+				bgp_routing_update_user_activity( Core_AuthService::getSessionType() );
+
 				if ( !empty($page) ) {
 					$mod_path = MODS_DIR . '/' . $module . '/' . $module . '.' . $page . '.php';
 				}
@@ -229,7 +238,7 @@ Flight::route('GET|POST /@role(/@module(/@page))', function( $role, $module, $pa
 					$mod_path = MODS_DIR . '/' . $module . '/' . $module . '.php';
 				}
 
-				bgp_routing_require_mod( $mod_path );
+				bgp_routing_require_mod( $mod_path, $id );
 			}
 			else {
 				$return = '/' . str_replace( BASE_URL, '', REQUEST_URI );

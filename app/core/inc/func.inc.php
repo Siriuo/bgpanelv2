@@ -20,7 +20,7 @@
  * @version		0.1
  * @category	Systems Administration
  * @author		warhawk3407 <warhawk3407@gmail.com> @NOSPAM
- * @copyright	Copyleft 2014, Nikita Rousseau
+ * @copyright	Copyleft 2015, Nikita Rousseau
  * @license		GNU General Public License version 3.0 (GPLv3)
  * @link		http://www.bgpanel.net/
  */
@@ -29,15 +29,67 @@
 /**
  * Secure require alias for the routing component of the system
  */
-function bgp_routing_require_mod( $mod_path ) {
+function bgp_routing_require_mod( $mod_path, $id ) {
+
+	// Set Object ID if any
+	if ( !empty($id) ) {
+		$GLOBALS['OBJ_ID'] = $id;
+	}
+
 	if ( file_exists($mod_path) ) {
-		require( $mod_path );
+		// Protect class files and xml files from being called directly
+		if ((strstr($mod_path, 'class') === FALSE) && (strstr($mod_path, 'xml') === FALSE) ) {
+			require( $mod_path );
+			return 0;
+		}
 	}
-	else {
-		Flight::notFound();
-	}
+
+	Flight::notFound();
 }
 
+/**
+ * Update User Activity on page request
+ */
+function bgp_routing_update_user_activity( $type ) {
+	$dbh = Core_DBH::getDBH();		// Get Database Handle
+	$last_activity = date('Y-m-d H:i:s');
+
+	switch ($type) {
+
+		case 'Admin':
+			$sth = $dbh->prepare("
+				UPDATE " . DB_PREFIX . "admin
+				SET
+					last_activity	= :last_activity
+				WHERE
+					admin_id		= :admin_id
+				;");
+
+			$uid = Core_AuthService::getSessionInfo('ID');
+			$sth->bindParam(':last_activity', $last_activity);
+			$sth->bindParam(':admin_id', $uid);
+
+			$sth->execute();
+			break;
+
+		case 'User':
+			$sth = $dbh->prepare("
+				UPDATE " . DB_PREFIX . "user
+				SET
+					last_activity	= :last_activity
+				WHERE
+					user_id			= :user_id
+				;");
+
+			$uid = Core_AuthService::getSessionInfo('ID');
+			$sth->bindParam(':last_activity', $last_activity);
+			$sth->bindParam(':user_id', $uid);
+
+			$sth->execute();
+			break;
+
+	}
+}
 
 /**
  * Little function that will generate a random password
@@ -90,5 +142,80 @@ function bgp_set_alert( $strong, $body = '', $type = 'warning' )
 
 		$_SESSION['ALERT']['MSG-STRONG'] = $strong;
 		$_SESSION['ALERT']['MSG-BODY'] = $body;
+	}
+}
+
+/**
+ * bgp_get_net_status
+ *
+ * Test if the specified socket is Online or Offline.
+ *
+ * Return string 'Online' || 'Offline'
+ */
+function bgp_get_net_status($ip, $port)
+{
+	if($socket = @fsockopen($ip, $port, $errno, $errstr, 1))
+	{
+		fclose($socket);
+		return 'Online';
+	}
+	else
+	{
+		###
+		//Uncomment the line above for debugging
+		//echo "$errstr ($errno)<br />\n";
+		###
+		return 'Offline';
+	}
+}
+
+/**
+ * Convert bytes to human readable format
+ *
+ * http://codeaid.net/php/convert-size-in-bytes-to-a-human-readable-format-%28php%29
+ *
+ * @param integer bytes Size in bytes to convert
+ * @return string
+ */
+function bytesToSize($bytes, $precision = 2)
+{
+	$kilobyte = 1024;
+	$megabyte = $kilobyte * 1024;
+	$gigabyte = $megabyte * 1024;
+	$terabyte = $gigabyte * 1024;
+
+	if (($bytes >= 0) && ($bytes < $kilobyte)) {
+		return $bytes . ' B';
+
+	} elseif (($bytes >= $kilobyte) && ($bytes < $megabyte)) {
+		return round($bytes / $kilobyte, $precision) . ' KB';
+
+	} elseif (($bytes >= $megabyte) && ($bytes < $gigabyte)) {
+		return round($bytes / $megabyte, $precision) . ' MB';
+
+	} elseif (($bytes >= $gigabyte) && ($bytes < $terabyte)) {
+		return round($bytes / $gigabyte, $precision) . ' GB';
+
+	} elseif ($bytes >= $terabyte) {
+		return round($bytes / $terabyte, $precision) . ' TB';
+
+	} else {
+		return $bytes . ' B';
+	}
+}
+
+/**
+ * Format the mysql timestamp.
+ */
+function bgp_format_date( $timestamp )
+{
+	if ($timestamp == '0000-00-00 00:00:00' || $timestamp == 'Never')
+	{
+		return 'Never';
+	}
+	else
+	{
+		$dateTable = date_parse_from_format('Y-m-d H:i:s', $timestamp);
+		return date('l | F j, Y | H:i', mktime($dateTable['hour'], $dateTable['minute'], $dateTable['second'], $dateTable['month'], $dateTable['day'], $dateTable['year']));
 	}
 }
