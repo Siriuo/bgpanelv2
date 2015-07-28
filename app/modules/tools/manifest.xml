@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Module Manifest -->
+<bgp_module>
+	<module_info>
+		<author>Rousseau Nikita</author>
+		<version>1.0</version>
+	</module_info>
+
+	<module_settings>
+		<title></title>
+		<href>#</href>
+		<icon>fa fa-wrench fa-fw</icon>
+	</module_settings>
+
+	<module_options>
+	</module_options>
+
+	<module_pages>
+		<page>
+			<name>opdb</name>
+			<description>Optimize Database</description>
+		</page>
+		<page>
+			<name>phpinfo</name>
+			<description>Php Info</description>
+		</page>
+	</module_pages>
+
+	<module_dependencies>
+	</module_dependencies>
+
+	<class_definition filename="app/modules/tools/tools.class.php" classname="BGP_Module_Tools"/>
+	<controller_class_definition filename="app/modules/tools/tools.controller.class.php" classname="BGP_Controller_Tools"/>
+</bgp_module>

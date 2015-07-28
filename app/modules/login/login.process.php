@@ -58,13 +58,18 @@ switch ($task)
 
 		if ( $authService->isBanned() == FALSE ) {
 
-			echo $loginController->authenticateUser( $_POST );
+			if ( isset($_POST['username']) && isset($_POST['password']) ) {
+				$json = $loginController->authenticateUser( $_POST['username'], $_POST['password'] );
+				Flight::json( $json );
+			}
+			else {
+				Flight::redirect('/400');
+			}
 		}
 		else {
 			$authService->incrementSecCount(); // Extend ban duration
 
-			header( Core_Http_Status_Codes::httpHeaderFor( 403 ) );
-			echo Core_Http_Status_Codes::getMessageForCode( 403 );
+			Flight::redirect('/401');
 		}
 		exit( 0 );
 
@@ -86,18 +91,37 @@ switch ($task)
 
 			if ( $image->check( $_POST['captcha'] ) == TRUE ) {
 				// Good captcha
-				echo $loginController->sendNewPassword( $_POST, TRUE );
+
+				if ( isset($_POST['username']) && isset($_POST['email']) ) {
+					$json = $loginController->sendNewPassword( $_POST['username'], $_POST['email'], TRUE );
+
+					if ($json['success'] === TRUE) {
+						// Notification
+						bgp_set_alert( T_('Your password has been reset and emailed to you.'), NULL, 'success' );
+					}
+
+					Flight::json( $json );
+				}
+				else {
+					Flight::redirect('/400');
+				}
 			}
 			else {
 				// Bad captcha
-				echo $loginController->sendNewPassword( $_POST, FALSE );
+
+				if ( isset($_POST['username']) && isset($_POST['email']) ) {
+					$json = $loginController->sendNewPassword( $_POST['username'], $_POST['email'], FALSE );
+					Flight::json( $json );
+				}
+				else {
+					Flight::redirect('/400');
+				}
 			}
 		}
 		else {
 			$authService->incrementSecCount(); // Extend ban duration
 
-			header( Core_Http_Status_Codes::httpHeaderFor( 403 ) );
-			echo Core_Http_Status_Codes::getMessageForCode( 403 );
+			Flight::redirect('/401');
 		}
 		exit( 0 );
 

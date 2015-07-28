@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- GUI Manifest -->
+<bgp_module>
+	<module_tabs>
+		<general>
+			<href>./config</href>
+			<icon>fa fa-cog fa-fw</icon>
+		</general>
+	</module_tabs>
+
+	<module_sidebar>
+		<rank>98</rank>
+		<txt>Configuration</txt>
+		<href>#</href>
+		<icon>fa fa-cogs fa-fw</icon>
+
+		<sub_menu>
+			<general>
+				<system-settings>
+					<href>./config</href>
+					<icon>fa fa-wrench fa-fw</icon>
+				</system-settings>
+			</general>
+			<misc>
+				<cron-settings>
+					<href>./config/cron</href>
+					<icon>fa fa-info-circle fa-fw</icon>
+				</cron-settings>
+				<api-key>
+					<href>./config/apikey</href>
+					<icon>fa fa-info-circle fa-fw</icon>
+				</api-key>
+				<system-license>
+					<href>./config/license</href>
+					<icon>fa fa-certificate fa-fw</icon>
+				</system-license>
+			</misc>
+		</sub_menu>
+	</module_sidebar>
+</bgp_module>

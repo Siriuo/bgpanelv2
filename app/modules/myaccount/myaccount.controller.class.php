@@ -26,7 +26,7 @@
  */
 
 if ( !class_exists('BGP_Controller')) {
-	trigger_error('Module_Myaccount -> BGP_Controller is missing !');
+	trigger_error('Controller_Myaccount -> BGP_Controller is missing !');
 }
 
 /**
@@ -41,8 +41,29 @@ class BGP_Controller_Myaccount extends BGP_Controller {
 		parent::__construct( basename(__DIR__) );
 	}
 
-	public function updateUserConfig( $form )
+	/**
+	 * Update User Configuration
+	 *
+	 * @param string $username
+	 * @param string $password0
+	 * @param string $password1
+	 * @param string $email
+	 * @param string $language
+	 * @param optional string $firstname
+	 * @param optional string $lastname
+	 *
+	 * @author Nikita Rousseau
+	 */
+	public function updateUserConfig( $username, $password0, $password1, $email, $language, $firstname = '', $lastname = '' )
 	{
+		$form = array (
+			'username' 		=> $username,
+			'password0' 	=> $password0,
+			'password1' 	=> $password1,
+			'email' 		=> $email,
+			'language' 		=> $language
+		);
+
 		$errors			= array();  	// array to hold validation errors
 		$data 			= array(); 		// array to pass back data
 
@@ -104,29 +125,24 @@ class BGP_Controller_Myaccount extends BGP_Controller {
 
 			$db_data['username']			= $form['username'];
 			$db_data['password']			= Core_AuthService::getHash($form['password0']);
-			$db_data['firstname'] 			= $form['firstname'];
-			$db_data['lastname'] 			= $form['lastname'];
 			$db_data['email']				= $form['email'];
 			$db_data['lang']				= $form['language'];
+
+			if ( !empty($firstname) ) {
+				$db_data['firstname'] = $firstname;
+			}
+			if ( !empty($lastname) ) {
+				$db_data['lastname'] = $lastname;
+			}
 
 			$authService = Core_AuthService::getAuthService();
 			$uid = Core_AuthService::getSessionInfo('ID');
 
 			foreach ($db_data as $key => $value) {
 
-				if (Core_AuthService::getSessionType() == 'Admin') {
-					$sth = $dbh->prepare( "	UPDATE " . DB_PREFIX . "admin
-											SET " . $key . " = :" . $key . "
-											WHERE admin_id = '" . $uid . "';" );
-				}
-				else if (Core_AuthService::getSessionType() == 'User') {
-					$sth = $dbh->prepare( "	UPDATE " . DB_PREFIX . "user
-											SET " . $key . " = :" . $key . "
-											WHERE user_id = '" . $uid . "';" );
-				}
-				else {
-					exit(1);
-				}
+				$sth = $dbh->prepare( "	UPDATE " . DB_PREFIX . "user
+										SET " . $key . " = :" . $key . "
+										WHERE user_id = '" . $uid . "';" );
 
 				$sth->bindParam( ':' . $key, $value );
 				$sth->execute();
@@ -135,36 +151,16 @@ class BGP_Controller_Myaccount extends BGP_Controller {
 			// Reload Session
 			$authService->rmSessionInfo();
 
-			switch (Core_AuthService::getSessionType()) {
-				case 'Admin':
-					$authService->setSessionInfo(
-						$uid,
-						$db_data['username'],
-						$db_data['firstname'],
-						$db_data['lastname'],
-						$db_data['lang'],
-						BGP_ADMIN_TEMPLATE,
-						'Admin'
-						);
-					$authService->setSessionPerms( 'Admin' );
-					break;
+			$authService->setSessionInfo(
+				$uid,
+				$db_data['username'],
+				$db_data['firstname'],
+				$db_data['lastname'],
+				$db_data['lang'],
+				BGP_USER_TEMPLATE
+				);
 
-				case 'User':
-					$authService->setSessionInfo(
-						$uid,
-						$db_data['username'],
-						$db_data['firstname'],
-						$db_data['lastname'],
-						$db_data['lang'],
-						BGP_USER_TEMPLATE,
-						'User'
-						);
-					$authService->setSessionPerms( 'User' );
-					break;
-
-				default:
-					exit(1);
-			}
+			$authService->setSessionPerms( );
 
 			$this->rmCookie( 'LANG' );
 		}
@@ -184,13 +180,10 @@ class BGP_Controller_Myaccount extends BGP_Controller {
 		else {
 
 			$data['success'] = true;
-
-			// notification
-			bgp_set_alert( T_('Settings Updated Successfully!'), NULL, 'success' );
 		}
 		
 		// return all our data to an AJAX call
-		return json_encode($data);
+		return $data;
 	}
 
 	private function rmCookie( $cookie ) {

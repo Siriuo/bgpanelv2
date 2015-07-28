@@ -37,15 +37,15 @@ class BGP_Module
 	public static $module_definition = array();
 	public static $module_name = '';
 
-	function __construct( $module_name, $manifest_file = 'manifest.xml' ) {
+	function __construct( $module_name ) {
 
 		// Test Manifest File
-		if ( !file_exists(MODS_DIR . '/' . $module_name . '/' . $manifest_file) ) {
-			$manifest_file = 'manifest.xml';
+		if ( !file_exists(MODS_DIR . '/' . $module_name . '/manifest.xml' ) ) {
+			trigger_error("BGP_Module -> Missing manifest file !", E_USER_ERROR);
 		}
 
 		// Load Plugin Manifest
-		$xml = simplexml_load_string( file_get_contents( MODS_DIR . '/' . $module_name . '/' . $manifest_file ) );
+		$xml = simplexml_load_string( file_get_contents( MODS_DIR . '/' . $module_name . '/manifest.xml' ) );
 		$json = json_encode($xml);
 		self::$module_definition = json_decode($json, TRUE);
 		self::$module_name = $module_name;
@@ -54,19 +54,9 @@ class BGP_Module
 		self::requireDepends( );
 	}
 
-	public static function getModuleName( $format = '.' ) {
+	public static function getModuleName( ) {
 
-		switch ($format)
-		{
-			case '/':
-				return str_replace('.', '/', self::$module_name);
-
-			case '_':
-				return str_replace('.', '_', self::$module_name);
-
-			default:
-				return self::$module_name;
-		}
+		return self::$module_name;
 	}
 
 	public static function getModuleInfo( $info = '' ) {
@@ -96,6 +86,16 @@ class BGP_Module
 		}
 		else {
 			return '';
+		}
+	}
+
+	public static function getModulePages( ) {
+
+		if (isset(self::$module_definition['module_pages'])) {
+			return self::$module_definition['module_pages'];
+		}
+		else {
+			return array();
 		}
 	}
 
@@ -141,4 +141,30 @@ class BGP_Module
 		}
 	}
 
+	public static function setModulePageTitle( $page = '' ) {
+
+		$title = self::$module_name;
+
+		if (!empty($page)) {
+			$module_pages = BGP_Module::getModulePages();
+
+			if (!empty($module_pages)) {
+				$module_pages = $module_pages['page'];
+
+				if (isset($module_pages[0])) {
+					foreach ($module_pages as $key => $value) {
+						if ($value['name'] == $page) {
+							$title = $value['description'];
+							break;
+						}
+					}
+				}
+				else {
+					$title = $module_pages['description'];
+				}
+			}
+		}
+
+		self::$module_definition['module_settings']['title'] = $title;
+	}
 }

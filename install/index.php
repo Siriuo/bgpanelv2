@@ -30,7 +30,7 @@ define('LICENSE', 'GNU GENERAL PUBLIC LICENSE - Version 3, 29 June 2007');
 /**
  * Install Wizard Version
  */
-define('WIZARDVERSION', 'v2.0.1b');
+define('WIZARDVERSION', 'v2.1.0');
 define('ENV_RUNTIME', 'INSTALL_WIZARD');
 
 //---------------------------------------------------------+
@@ -54,6 +54,12 @@ require( INSTALL_DIR . '/inc/versions.inc.php' );
  * BGP GAME CONFIGURATION DATABASE
  */
 require( INSTALL_DIR . '/inc/game.conf.inc.php' );
+
+/**
+ * PHP-RBAC Library
+ */
+require( LIBS_DIR . '/phprbac2.0/core/Jf.php' );
+require( LIBS_DIR . '/phprbac2.0/Rbac.php' );
 
 //---------------------------------------------------------+
 
@@ -258,14 +264,14 @@ else if ($_GET['step'] == 'one')
 						</tr>
 <?php
 
-	$versioncompare = version_compare(PHP_VERSION, '5.3.4');
+	$versioncompare = version_compare(PHP_VERSION, '5.4.0');
 	if ($versioncompare == -1)
 	{
 ?>
 						<tr class="error">
 							<td>Checking your version of PHP</td>
 							<td><span class="label label-important">FAILED (<?php echo PHP_VERSION; ?>)</span></td>
-							<td>Upgrade to PHP 5.3.4 or greater</td>
+							<td>Upgrade to PHP 5.4.0 or greater</td>
 						</tr>
 <?php
 		$error = TRUE;
@@ -627,7 +633,7 @@ else if ($_GET['step'] == 'one')
 
 	if (!defined('APP_API_KEY'))
 	{
-		if (is_writable( CONF_API_INI ))
+		if (is_writable( CONF_API_KEY_INI ))
 		{
 ?>
 						<tr class="success">
@@ -745,6 +751,8 @@ else if ($_GET['step'] == 'one')
 
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+
 
 ?>
 					</tbody>
@@ -909,9 +917,9 @@ APP_SESSION_KEY 	= \"".$APP_SESSION_KEY."\"
 				exit('Critical error while installing ! Unable to write to /conf/secret.keys.ini !');
 			}
 
-			if (is_writable( CONF_API_INI )) {
-				$handle = fopen( CONF_API_INI, 'w');
-				$data = "; API CONFIGURATION FILE
+			if (is_writable( CONF_API_KEY_INI )) {
+				$handle = fopen( CONF_API_KEY_INI, 'w');
+				$data = "; API KEY FILE
 APP_API_KEY 		= \"".$APP_API_KEY."\"
 ";
 				fwrite($handle, $data);
@@ -948,9 +956,101 @@ APP_API_KEY 		= \"".$APP_API_KEY."\"
 			}
 
 			//---------------------------------------------------------+
-			//---------------------------------------------------------+
+			// Creating Database Schema
 
 			require("./sql/full.php");
+
+			//---------------------------------------------------------+
+			// Creating System Permissions
+
+			Jf::$Db = $dbh;
+
+			$rbac = new PhpRbac\Rbac();
+
+			$perms = array();
+			
+			$handle = opendir( MODS_DIR );
+
+			if ($handle) {
+			
+				// Foreach modules
+				while (false !== ($entry = readdir($handle))) {
+			
+					// Dump specific directories
+					if ($entry != "." && $entry != "..")
+					{
+						$module = $entry;
+
+						// Exceptions
+						if ($module != 'login')
+						{
+							// Get Module Pages
+							$pages = Core_Reflection::getModulePublicPages( $module );
+
+							if (!empty($pages)) {
+
+								// Create Page Access Permission
+
+								foreach ($pages as $value) {
+									$id = $rbac->Permissions->add($value['page'], $value['description']);
+									$perms[$module][] = $id;
+								}
+							}
+
+							// Get Public Methods
+							$methods = Core_Reflection::getControllerPublicMethods( $module );
+
+							if (!empty($methods)) {
+
+								// Create Method Permission
+
+								foreach ($methods as $key => $value) {
+									$id = $rbac->Permissions->add($value['method'], $value['description']);
+									$perms[$module][] = $id;
+								}
+							}
+						}
+					}
+				}
+			
+				closedir($handle);
+			}
+
+			// Create Default Roles
+
+			$apiRoleId = $rbac->Roles->add('api', 'API User');
+			$adminRoleId = $rbac->Roles->add('admin', 'System Administrator');
+			$userRoleId  = $rbac->Roles->add('user', 'Regular System User');
+
+			// Bind Perms To Roles
+
+			foreach ($perms as $module => $ids) {
+				switch ($module) {
+					case 'box':
+					case 'config':
+					case 'tools':
+
+						// Admin Only
+
+						foreach ($ids as $id) {
+							$rbac->Roles->assign($adminRoleId, $id);
+						}
+
+						break 1;
+					
+					default:
+
+						foreach ($ids as $id) {
+							$rbac->Roles->assign($adminRoleId, $id);
+							$rbac->Roles->assign($userRoleId, $id);
+						}
+
+						break 1;
+				}
+			}
+
+			// Assign API Role
+			$rbac->Users->assign($apiRoleId, 2);
 
 			break;
 
@@ -1048,7 +1148,7 @@ APP_API_KEY 		= \"".$APP_API_KEY."\"
 				Admin Username: <b>admin</b><br />
 				Admin Password: <b>password</b><br />
 				<hr>
-				<i class="icon-share-alt"></i>&nbsp;<a href="../login">@Admin Login</a>
+				<i class="icon-share-alt"></i>&nbsp;<a href="../login">@Login</a>
 				<hr>
 				<div class="alert alert-error">
 					<strong>Wait!</strong>

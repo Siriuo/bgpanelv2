@@ -41,7 +41,7 @@ $gui = new Core_GUI( $module );
 /**
  * Javascript Generator
  */
-$js = new Core_JS_GUI();
+$js = new Core_JS_GUI( $module );
 
 /**
  * Build Page Header
@@ -61,25 +61,13 @@ $languages = parse_ini_file( CONF_LANG_INI );
 
 $dbh = Core_DBH::getDBH(); // Get Database Handle
 
-$type = strtolower(Core_AuthService::getSessionType()); // Get user type
 $uid = Core_AuthService::getSessionInfo('ID'); // Get user id
 
-if ($type == 'admin') {
-
-	$sth = $dbh->prepare("
-	SELECT *
-	FROM " . DB_PREFIX . "admin
-	WHERE admin_id = :uid
-	;");
-}
-else {
-
-	$sth = $dbh->prepare("
-	SELECT *
-	FROM " . DB_PREFIX . "user
-	WHERE user_id = :uid
-	;");
-}
+$sth = $dbh->prepare("
+SELECT *
+FROM " . DB_PREFIX . "user
+WHERE user_id = :uid
+;");
 
 $sth->bindParam( ':uid', $uid );
 
@@ -231,6 +219,9 @@ foreach ($languages as $key => $value)
 
 /**
  * Generate AngularJS Code
+ * @arg $task
+ * @arg $inputs
+ * @arg $redirect
  */
 
 $fields = array(
@@ -243,7 +234,7 @@ $fields = array(
 		'language'		=> htmlspecialchars( Core_AuthService::getSessionInfo('LANG'), ENT_QUOTES)
 	);
 
-$js->getAngularController( 'updateUserConfig', $module::getModuleName( '/' ), $fields, './');
+$js->getAngularController( 'updateUserConfig', $fields, './' );
 
 ?>
 					<!-- END: SCRIPT -->

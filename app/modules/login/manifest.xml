@@ -17,6 +17,13 @@
 		<no_sidebar>1</no_sidebar>
 	</module_options>
 
+	<module_pages>
+		<page>
+			<name>password</name>
+			<description>Lost Password</description>
+		</page>
+	</module_pages>
+
 	<module_dependencies>
 		<php_libs>
 			<securimage>
